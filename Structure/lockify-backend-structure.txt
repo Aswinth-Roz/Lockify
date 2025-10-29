@@ -1,0 +1,17 @@
+lockify-backend/
+│  server.js
+│  package.json
+│  .env.example
+│  README.md
+└─ src/
+   ├─ config/db.js
+   ├─ middleware/auth.js
+   ├─ models/
+   │  ├─ User.js
+   │  └─ Note.js
+   ├─ controllers/
+   │  ├─ authController.js
+   │  └─ noteController.js
+   └─ routes/
+      ├─ authRoutes.js
+      └─ noteRoutes.js
