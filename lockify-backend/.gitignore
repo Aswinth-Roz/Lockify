@@ -1,0 +1,37 @@
+# ======================
+# 🚫 LOCKIFY .gitignore
+# ======================
+
+# Environment variables (secrets)
+.env
+
+# Dependency folders
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Build & cache files
+dist/
+build/
+.cache/
+.vercel/
+
+# IDE / Editor folders
+.vscode/
+.idea/
+
+# Logs
+logs
+*.log
+
+# OS temp files
+*.tmp
+*.swp
+
+# Frontend build (optional, if you bundle)
+lockify-frontend/node_modules/
+lockify-frontend/.DS_Store
