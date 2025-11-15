@@ -1,6 +1,5 @@
 // ============================
-// 🚀 LOCKIFY SERVER.JS (FINAL)
-// Ready for Vercel deployment
+// 🚀 LOCKIFY SERVER.JS (FINAL LOCAL + LAN VERSION)
 // ============================
 
 import express from "express";
@@ -11,59 +10,77 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import { fileURLToPath } from "url";
+import os from "os";
 
 import { connectDB } from "./src/config/db.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import noteRoutes from "./src/routes/noteRoutes.js";
 
-// --- Environment Setup ---
+// --- ENVIRONMENT SETUP ---
 dotenv.config();
 const app = express();
+const PORT = process.env.PORT || 5000;
 
-// --- Middleware ---
+// --- SECURITY + JSON ---
 app.use(helmet());
 app.use(express.json({ limit: "1mb" }));
 
-// CORS Setup
-app.use(cors());
+// --- CORS (allow LAN + localhost during dev) ---
+app.use(
+  cors({
+    origin: "*", // ✅ open for testing on local network
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// --- LOGGER ---
 app.use(morgan("dev"));
 
-// Rate limiter for auth routes (basic protection)
+// --- RATE LIMITER ---
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per window
 });
 app.use("/api/auth", authLimiter);
 
-// --- API Routes ---
-app.get("/api/health", (req, res) => res.json({ ok: true, message: "Lockify API running" }));
+// --- ROUTES ---
+app.get("/api/health", (req, res) =>
+  res.json({ ok: true, message: "Lockify API running ✅" })
+);
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", noteRoutes);
 
-// --- FRONTEND SERVING (for Vercel) ---
+// --- STATIC FRONTEND (optional: serves your frontend folder if bundled) ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Serve static frontend files
 app.use(express.static(path.join(__dirname, "../lockify-frontend")));
 
-// Handle all other routes -> return index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../lockify-frontend", "index.html"));
 });
 
 // --- START SERVER ---
-const PORT = process.env.PORT || 5000;
-
 connectDB()
   .then(() => {
-    app.listen(PORT, () => {
-      console.log(`✅ MongoDB connected`);
-      console.log(`🚀 Lockify running on port ${PORT}`);
+    // detect local network IP
+    const networkInterfaces = os.networkInterfaces();
+    const localIp =
+      Object.values(networkInterfaces)
+        .flat()
+        .find((iface) => iface.family === "IPv4" && !iface.internal)?.address ||
+      "localhost";
+
+    // start express server
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log("=========================================");
+      console.log("✅ MongoDB connected");
+      console.log(`🚀 Lockify running locally at: http://localhost:${PORT}`);
+      console.log(`🌐 LAN access available at: http://${localIp}:${PORT}`);
+      console.log("=========================================");
     });
   })
   .catch((err) => {
     console.error("❌ Failed to connect MongoDB:", err);
     process.exit(1);
   });
-  
